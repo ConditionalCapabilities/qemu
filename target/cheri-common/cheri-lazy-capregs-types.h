@@ -77,11 +77,11 @@ static inline const char *cap_reg_state_string(CapRegState state)
 }
 
 // Cap registers should be padded so they are easier to move.
-#if TARGET_LONG_BITS == 32
-_Static_assert(sizeof(cap_register_t) == 24, "");
-#else
-_Static_assert(sizeof(cap_register_t) == 48, "");
-#endif
+// #if TARGET_LONG_BITS == 32
+// _Static_assert(sizeof(cap_register_t) == 24, "");
+// #else
+// _Static_assert(sizeof(cap_register_t) == 48, "");
+// #endif
 /*
  * pesbt should come directly before reg._cr_cursor, so that the two can be
  * moved with a single 128bit vector op.

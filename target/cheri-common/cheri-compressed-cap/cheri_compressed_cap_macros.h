@@ -79,6 +79,20 @@
 #define _CC_MIN(a, b) ((a) < (b) ? (a) : (b))
 #define _CC_MAX(a, b) ((a) > (b) ? (a) : (b))
 
+/// example encoding for example _CC_FIELD(EBT, 90, 64)
+/// start 64-64 = 0
+/// last 90-64 = 26 
+/// size 26 +1 
+/// mask_not_shifted (00000111111111111111111111111111) 0x7ffffff 
+/// mask64 = 0x7ffff
+
+/// another example encoding for example _CC_FIELD(UPERMS, 127, 124)
+/// start 124-64 = 60
+/// last 127-64 = 63 
+/// size 4
+/// mask_not_shifted (00000111111111111111111111111111) f000000000000000 
+/// mask64 = f 
+
 #define _CC_FIELD(name, last, start)                                                                                   \
     _CC_N(FIELD_##name##_START) = (start - _CC_N(ADDR_WIDTH)),                                                         \
     _CC_N(FIELD_##name##_LAST) = (last - _CC_N(ADDR_WIDTH)),                                                           \
@@ -87,13 +101,42 @@
     _CC_N(FIELD_##name##_MASK64) = (uint64_t)_CC_N(FIELD_##name##_MASK_NOT_SHIFTED) << _CC_N(FIELD_##name##_START),    \
     _CC_N(FIELD_##name##_MAX_VALUE) = _CC_N(FIELD_##name##_MASK_NOT_SHIFTED)
 
+// mg notes: don't use the addr_width for start and last  tn:check the naming
+#define _CC_OP_FIELD(name, last, start)                                                                                   \
+    _CC_N(FIELD_##name##_START) = (start),                                                         \
+    _CC_N(FIELD_##name##_LAST) = (last),                                                           \
+    _CC_N(FIELD_##name##_SIZE) = _CC_N(FIELD_##name##_LAST) - _CC_N(FIELD_##name##_START) + 1 ,                         \
+    _CC_N(FIELD_##name##_MASK_NOT_SHIFTED) =_CC_BITMASK64(_CC_N(FIELD_##name##_SIZE)),                                \
+    _CC_N(FIELD_##name##_MASK64) = (uint64_t)_CC_N(FIELD_##name##_MASK_NOT_SHIFTED) << _CC_N(FIELD_##name##_START),   \
+    _CC_N(FIELD_##name##_MAX_VALUE) = _CC_N(FIELD_##name##_MASK_NOT_SHIFTED)
+
+
 #define _CC_ENCODE_FIELD(value, name)                                                                                  \
-    ((uint64_t)((value)&_CC_N(FIELD_##name##_MAX_VALUE)) << _CC_N(FIELD_##name##_START))
+    ((uint64_t)((value)&_CC_N(FIELD_##name##_MAX_VALUE)) << (_CC_N(FIELD_##name##_START)))
+
+#define _CC_ENCODED_EOBT_FIELD(value, name)                                                                                  \
+    ((uint64_t)((value) >> 52))& 0xFFFF
+
+
+#define _CC_ENCODE_OP_FIELD(value, name)                                                                               \
+    ((uint64_t)((value)&_CC_N(FIELD_##name##_MASK64)))
+
+#define _CC_ENCODE_EOBT_TRY_FIELD(value, name)                                                                                  \
+    (uint64_t)((value)&_CC_N(FIELD_##name##_MAX_VALUE))
+
 
 #define _CC_EXTRACT_FIELD(value, name) _cc_N(getbits)((value), _CC_N(FIELD_##name##_START), _CC_N(FIELD_##name##_SIZE))
 
+/* encode example for the ebt field 
+   assume that we want to encode uperms _CC_FIELD(UPERMS, 127, 124)
+   0010 & f  << 60 + 0 */
 #define _CC_ENCODE_EBT_FIELD(value, name)                                                                              \
     ((uint64_t)((value)&_CC_N(FIELD_##name##_MAX_VALUE)) << (_CC_N(FIELD_##name##_START) + _CC_N(FIELD_EBT_START)))
+
+// 103080  & _CC_N(FIELD_OP_EXP_ZERO_TOP_MAX_VALUE)) <<  (_CC_N(FIELD_EXP_ZERO_TOP_START))))
+// _CC_N(FIELD_OP_EXP_ZERO_TOP_MAX_VALUE)) 011111111111 << 51  
+#define _CC_ENCODE_EOBT_FIELD(value, name) \
+    (uint64_t)((value) & _CC_N(FIELD_##name##_MAX_VALUE)) << (((_CC_N(FIELD_##name##_START)))) 
 
 #define _CC_SPECIAL_OTYPE(name, val)                                                                                   \
     _CC_N(name) = (_CC_N(SPECIAL_OTYPE_VAL)(val)), _CC_N(name##_SIGNED) = (_CC_N(SPECIAL_OTYPE_VAL_SIGNED)(val))

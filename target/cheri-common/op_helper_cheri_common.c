@@ -1074,7 +1074,7 @@ static void do_setbounds(bool must_be_exact, CPUArchState *env, uint32_t cd,
             raise_cheri_exception(env, CapEx_TagViolation, cb);
         } else if (is_cap_sealed(cbp)) {
             raise_cheri_exception(env, CapEx_SealViolation, cb);
-        } else if (!cap_is_in_bounds(cbp, cap_get_cursor(cbp), length)) {
+        } else if (!cap_is_in_bounds(cbp, cap_get_cursor(cbp) & _CC_ADDRESS_MASK, length)) {
             raise_cheri_exception(env, CapEx_LengthViolation, cb);
         }
         /* Use checked_setbounds to ensure we didn't missed any checks. */
@@ -1107,6 +1107,68 @@ static void do_setbounds(bool must_be_exact, CPUArchState *env, uint32_t cd,
     }
 
     update_capreg(env, cd, &result);
+}
+
+static void do_setopbounds(CPUArchState *env,
+                         uint32_t cd, uint32_t cb, target_ulong length,
+                         uintptr_t _host_return_address, target_ulong perm)
+{
+    const cap_register_t *cbp = get_readonly_capreg(env, cb);
+    bool exact;
+    
+    DEFINE_RESULT_VALID;
+    cap_register_t result = *cbp;
+
+
+
+    exact = CAP_cc(setopbounds)(&result, length);
+
+    target_ulong new_perms = cap_get_perms(&result);
+    if (cap_has_perms(&result, perm)) {
+        new_perms &= ~perm;
+        CAP_cc(update_perms)(&result, new_perms);
+    } 
+    
+    CAP_cc(setopbounds)(&result, length);
+    update_capreg(env, cd, &result);
+}
+
+void CHERI_HELPER_IMPL(csetopbounds(CPUArchState *env, uint32_t cd, uint32_t cb,
+                                  target_ulong rt))
+{
+    do_setopbounds(env, cd, cb, rt, GETPC(), CAP_PERM_WRITE_BEFORE_READ);
+}
+
+void CHERI_HELPER_IMPL(csetrobound(CPUArchState *env, uint32_t cd, uint32_t cb,
+  target_ulong rt))
+{
+    do_setopbounds(env, cd, cb, rt, GETPC(), CAP_PERM_WRITE_BEFORE_READ); //todo
+}
+
+
+void CHERI_HELPER_IMPL(csetrtbound(CPUArchState *env, uint32_t cd, uint32_t cb,
+  target_ulong rt))
+{
+    do_setopbounds(env, cd, cb, rt, GETPC(), CAP_PERM_WRITE_BEFORE_READ); // todo
+}
+
+
+void CHERI_HELPER_IMPL(csetxtbound(CPUArchState *env, uint32_t cd, uint32_t cb,
+                                  target_ulong rt))
+{
+    do_setopbounds(env, cd, cb, rt, GETPC(), CAP_PERM_WRITE_BEFORE_READ);  //todo
+}
+
+void CHERI_HELPER_IMPL(csetxobound(CPUArchState *env, uint32_t cd, uint32_t cb,
+  target_ulong rt))
+{
+    do_setopbounds(env, cd, cb, rt, GETPC(), CAP_PERM_WRITE_BEFORE_READ); //todo
+} 
+
+void CHERI_HELPER_IMPL(csetwbxbound(CPUArchState *env, uint32_t cd, uint32_t cb,
+  target_ulong rt))
+{
+    do_setopbounds(env, cd, cb, rt, GETPC(), CAP_PERM_WRITE_BEFORE_EXECUTE);
 }
 
 void CHERI_HELPER_IMPL(csetbounds(CPUArchState *env, uint32_t cd, uint32_t cb,

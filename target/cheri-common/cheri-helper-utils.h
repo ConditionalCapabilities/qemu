@@ -312,7 +312,28 @@ static inline QEMU_ALWAYS_INLINE target_ulong cap_check_common_reg(
     // checks and Store permissions fault > load alignment fault
 
     bool is_load = (required_perms & CAP_PERM_LOAD) != 0;
-    bool in_bounds = cap_is_in_bounds(cbp, addr, size);
+    bool is_store = (required_perms & CAP_PERM_STORE) != 0;
+    bool in_bounds = cap_is_in_bounds(cbp, addr & _CC_ADDRESS_MASK, size);
+
+    uint64_t setopbounds_size = 0;
+    if (!cap_has_perms(cbp, CAP_PERM_WRITE_BEFORE_READ) && is_store) {
+        if(((addr & _CC_ADDRESS_MASK )+ size) > cap_get_op_top_full(cbp)){
+            bool debug = false; 
+            /*TO DOOO*/
+            if ((cbp -> _cr_op_top > cbp -> cr_base)) {
+                setopbounds_size = cbp -> _cr_op_top - cbp -> cr_base + size; 
+            } else {
+                setopbounds_size = size; 
+            }
+            helper_csetopbounds(env, cb, cb, setopbounds_size); 
+        }
+    }
+
+    if (!cap_has_perms(cbp, CAP_PERM_WRITE_BEFORE_READ) && is_load) {
+        if(!cap_is_in_op_bounds(cbp, addr & _CC_ADDRESS_MASK, size)){
+            raise_cheri_exception_addr_wnr(env, CapEx_LengthViolation, cb, addr, !is_load);
+        }
+    }
 
     if (!cbp->cr_tag) {
         raise_cheri_exception_addr_wnr(env, CapEx_TagViolation, cb, addr,
@@ -364,7 +385,7 @@ static inline QEMU_ALWAYS_INLINE target_ulong cap_check_common_reg(
                                    size, access_type, addr);
 #endif
     }
-    return addr;
+    return  addr & _CC_ADDRESS_MASK;
 }
 
 // Helper for RISCV AMOSWAP

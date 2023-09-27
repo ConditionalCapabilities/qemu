@@ -303,6 +303,7 @@ static inline void update_capreg(CPUArchState *env, unsigned regnum,
      * We should find occurrences of this and get rid of them.
      */
     get_cap_in_gpregs(gpcrs, regnum)->cr_pesbt = CAP_cc(compress_raw)(target);
+    get_cap_in_gpregs(gpcrs, regnum)->_cr_cursor = target -> _cr_cursor;
     cheri_debug_assert(get_capreg_state(gpcrs, regnum) ==
                        CREG_FULLY_DECOMPRESSED);
     sanity_check_capreg(gpcrs, regnum);

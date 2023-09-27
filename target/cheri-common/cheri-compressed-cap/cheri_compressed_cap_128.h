@@ -42,6 +42,7 @@
 #define CC128_CAP_SIZE 16
 #define CC128_CAP_BITS 128
 #define CC128_ADDR_WIDTH 64
+#define CC128_OP_ADDR_WIDTH 64
 #define CC128_LEN_WIDTH 65
 /* Max exponent is the largest exponent _required_, not that can be encoded. */
 #define CC128_MANTISSA_WIDTH 14
@@ -69,25 +70,35 @@ typedef int64_t cc128_saddr_t;
 #pragma GCC diagnostic ignored "-Wpedantic"
 enum {
     _CC_FIELD(UPERMS, 127, 124),
-    _CC_FIELD(HWPERMS, 123, 112),
-    _CC_FIELD(RESERVED, 111, 110),
+    _CC_FIELD(HWPERMS, 123, 110),
+    _CC_FIELD(RESERVED, 110, 110),
     _CC_FIELD(FLAGS, 109, 109),
     _CC_FIELD(OTYPE, 108, 91),
     _CC_FIELD(EBT, 90, 64),
 
     _CC_FIELD(INTERNAL_EXPONENT, 90, 90),
-    _CC_FIELD(TOP_ENCODED, 89, 78),
-    _CC_FIELD(BOTTOM_ENCODED, 77, 64),
+    _CC_FIELD(TOP_ENCODED, 89, 78), // 12 bits 
+    _CC_FIELD(BOTTOM_ENCODED, 77, 64), // 14 bits 
 
     // Top/bottom offsets depending in INTERNAL_EXPONENT flag:
     // Without internal exponent:
-    _CC_FIELD(EXP_ZERO_TOP, 89, 78),
+    _CC_FIELD(EXP_ZERO_TOP, 89, 78),    //12 bits
     _CC_FIELD(EXP_ZERO_BOTTOM, 77, 64),
     // With internal exponent:
-    _CC_FIELD(EXP_NONZERO_TOP, 89, 81),
-    _CC_FIELD(EXPONENT_HIGH_PART, 80, 78),
+    _CC_FIELD(EXP_NONZERO_TOP, 89, 81), //9 bits 
+    _CC_FIELD(EXPONENT_HIGH_PART, 80, 78), //3 bits 
     _CC_FIELD(EXP_NONZERO_BOTTOM, 77, 67),
     _CC_FIELD(EXPONENT_LOW_PART, 66, 64),
+    
+
+    _CC_OP_FIELD(EOBT, 63, 48),
+    _CC_OP_FIELD(OP_TOP_ENCODED, 63, 50), // 14 bits 
+
+    // Without internal exponent:
+    _CC_OP_FIELD(OP_EXP_ZERO_TOP, 63, 50), // 14 bits
+    // With internal exponent:
+    _CC_OP_FIELD(OP_EXP_NONZERO_TOP, 63, 53), // 11 bits
+    _CC_OP_FIELD(OP_EXP_NONZERO_TOP_LSB, 52, 48), /// 5 bits
 };
 #pragma GCC diagnostic pop
 
@@ -95,6 +106,7 @@ enum {
 #define CC128_BOT_WIDTH CC128_FIELD_EXP_ZERO_BOTTOM_SIZE
 #define CC128_BOT_INTERNAL_EXP_WIDTH CC128_FIELD_EXP_NONZERO_BOTTOM_SIZE
 #define CC128_EXP_LOW_WIDTH CC128_FIELD_EXPONENT_LOW_PART_SIZE
+#define CC128_FIELD_OP_EXP_NONZERO_TOP_LSB CC128_FIELD_OP_EXP_NONZERO_TOP_LSB_SIZE
 
 #define CC128_PERM_GLOBAL (1 << 0)
 #define CC128_PERM_EXECUTE (1 << 1)
@@ -108,13 +120,19 @@ enum {
 #define CC128_PERM_UNSEAL (1 << 9)
 #define CC128_PERM_ACCESS_SYS_REGS (1 << 10)
 #define CC128_PERM_SETCID (1 << 11)
+#define CC128_PERM_WRITE_BEFORE_READ (1 << 12)
+#define CC128_PERM_WRITE_BEFORE_EXECUTE (1 << 13)
+#define CC128_PERM_WRITE_BEFORE_EXECUTE_ONLY (1 << 14)
+#define CC128_PERM_WRITE_ONCE (1 << 15)
+#define CC128_PERM_READ_ONCE (1 << 16)
+#define CC128_PERM_EXECUTE_ONCE (1 << 17)
 
-#define CC128_HIGHEST_PERM CC128_PERM_SETCID
+#define CC128_HIGHEST_PERM CC128_PERM_WRITE_BEFORE_EXECUTE
 
 _CC_STATIC_ASSERT(CC128_HIGHEST_PERM < CC128_FIELD_HWPERMS_MAX_VALUE, "permissions not representable?");
 _CC_STATIC_ASSERT((CC128_HIGHEST_PERM << 1) > CC128_FIELD_HWPERMS_MAX_VALUE, "all permission bits should be used");
 
-#define CC128_PERMS_ALL (0xfff) /* [0...11] */
+#define CC128_PERMS_ALL (0x1fff) /* [0...11] */
 #define CC128_UPERMS_ALL (0xf)  /* [15...18] */
 #define CC128_UPERMS_SHFT (15)
 #define CC128_UPERMS_MEM_SHFT (12)
@@ -174,6 +192,7 @@ decompress_128cap(uint64_t pesbt, uint64_t cursor, _cc_cap_t* cdp) {
 #define CC128_ENCODE_FIELD(value, name) _CC_ENCODE_FIELD(value, name)
 #define CC128_EXTRACT_FIELD(value, name) _CC_EXTRACT_FIELD(value, name)
 #define CC128_ENCODE_EBT_FIELD(value, name) _CC_ENCODE_EBT_FIELD(value, name)
+#define CC128_ENCODE_CURSOR_FIELD(value, name) _CC_ENCODE_EOBT_FIELD(value, name)
 
 #undef CC_FORMAT_LOWER
 #undef CC_FORMAT_UPPER

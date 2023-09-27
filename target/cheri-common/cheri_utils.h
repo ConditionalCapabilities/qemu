@@ -131,6 +131,12 @@ static inline cap_length_t cap_get_top_full(const cap_register_t *c)
     return c->_cr_top;
 }
 
+static inline cap_length_t cap_get_op_top_full(const cap_register_t *c)
+{
+    return c->_cr_op_top;
+}
+
+
 static inline bool cap_otype_is_reserved(target_ulong otype)
 {
     cheri_debug_assert(otype <= CAP_MAX_REPRESENTABLE_OTYPE &&
@@ -191,6 +197,18 @@ static inline bool cap_is_sealed_with_reserved_otype(const cap_register_t *c)
     target_ulong otype = cap_get_otype_unsigned(c);
     return cap_otype_is_reserved(otype) && otype != CAP_OTYPE_UNSEALED;
 }
+
+
+static inline bool cap_is_in_op_bounds(const cap_register_t *c, target_ulong addr,
+                                    size_t num_bytes)
+{   
+    if ((addr +  num_bytes) > cap_get_op_top_full(c)) {
+        //printf("error for load  address, %llx  \n", addr);
+        return false;
+    }
+    return true;
+}
+
 
 // Check if num_bytes bytes at addr can be read using capability c
 static inline bool cap_is_in_bounds(const cap_register_t *c, target_ulong addr,

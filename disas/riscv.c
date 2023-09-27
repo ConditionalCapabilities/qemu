@@ -523,6 +523,12 @@ typedef enum {
     rv_op_cspecialrw,
     rv_op_csetbounds,
     rv_op_csetboundsexact,
+    rv_op_csetopbounds,
+    rv_op_csetwbxbound,
+    rv_op_csetrobound,
+    rv_op_csetrtbound,
+    rv_op_csetxtbound,
+    rv_op_csetxobound,
     rv_op_cseal,
     rv_op_cunseal,
     rv_op_candperm,
@@ -1256,6 +1262,11 @@ const rv_opcode_data opcode_data[] = {
     [rv_op_cspecialrw] = { "cspecialrw", rv_codec_r, rv_fmt_cd_scr_cs1, NULL, 0, 0, 0 },
     [rv_op_csetbounds] = { "csetbounds", rv_codec_r, rv_fmt_cd_cs1_rs2, NULL, 0, 0, 0 },
     [rv_op_csetboundsexact] = { "csetboundsexact", rv_codec_r, rv_fmt_cd_cs1_rs2, NULL, 0, 0, 0 },
+    [rv_op_csetopbounds] = { "csetopbounds", rv_codec_r, rv_fmt_cd_cs1_rs2, NULL, 0, 0, 0 },
+    [rv_op_csetwbxbound] = { "csetwbxbound", rv_codec_r, rv_fmt_cd_cs1_rs2, NULL, 0, 0, 0 },
+    [rv_op_csetrobound] = { "csetrobound", rv_codec_r, rv_fmt_cd_cs1_rs2, NULL, 0, 0, 0 },
+    [rv_op_csetrtbound] = { "csetrtbound", rv_codec_r, rv_fmt_cd_cs1_rs2, NULL, 0, 0, 0 },
+    [rv_op_csetxtbound] = { "csetxtbound", rv_codec_r, rv_fmt_cd_cs1_rs2, NULL, 0, 0, 0 },
     [rv_op_cseal] = { "cseal", rv_codec_r, rv_fmt_cd_cs1_cs2, NULL, 0, 0, 0 },
     [rv_op_cunseal] = { "cunseal", rv_codec_r, rv_fmt_cd_cs1_cs2, NULL, 0, 0, 0 },
     [rv_op_candperm] = { "candperm", rv_codec_r, rv_fmt_cd_cs1_rs2, NULL, 0, 0, 0 },
@@ -1525,6 +1536,22 @@ static rv_opcode decode_cheri_inst(rv_inst inst) {
     // 0000010-0000111 unused
     CHERI_THREEOP_CASE(csetbounds,  0001000,  ..... ..... 000 ..... 1011011 @r)
     CHERI_THREEOP_CASE(csetboundsexact, 0001001,  ..... ..... 000 ..... 1011011 @r)
+    CHERI_THREEOP_CASE(csetopbounds, 0010111,  ..... ..... 000 ..... 1011011 @r)
+    CHERI_THREEOP_CASE(csetwbxbound, 0011000,  ..... ..... 000 ..... 1011011 @r)
+    CHERI_THREEOP_CASE(csetrobound, 0011001,  ..... ..... 000 ..... 1011011 @r)
+    CHERI_THREEOP_CASE(csetxobound, 0011010,  ..... ..... 000 ..... 1011011 @r)
+    CHERI_THREEOP_CASE(csetrtbound, 0011100,  ..... ..... 000 ..... 1011011 @r)
+    CHERI_THREEOP_CASE(csetxtbound, 0100010,  ..... ..... 000 ..... 1011011 @r)
+
+
+/* Flute implementation 
+Bit #(7) f7_cap_CSetWBRBound    = 7'h17;  0010111  1 + 2 + 4 + 16 = 23 
+Bit #(7) f7_cap_CSetWBXBound    = 7'h18;  0011000  16 + 8 = 24
+Bit #(7) f7_cap_CSetROBound     = 7'h19;  0011001  16 + 8 + 1 = 25
+Bit #(7) f7_cap_CSetXOBound     = 7'h1a;  0011010  16 + 8 + 2 = 26 
+Bit #(7) f7_cap_CSetWTBound     = 7'h1b;  0011011  16 + 8 + 2 + 1 = 27
+Bit #(7) f7_cap_CSetRTBound     = 7'h1c;  0011100  16 + 8 + 4 = 28 
+Bit #(7) f7_cap_CSetXTBound     = 7'h22;  0100010 */
     // 0001010 unused
     CHERI_THREEOP_CASE(cseal,       0001011,  ..... ..... 000 ..... 1011011 @r)
     CHERI_THREEOP_CASE(cunseal,     0001100,  ..... ..... 000 ..... 1011011 @r)

@@ -109,8 +109,8 @@ typedef struct cc256_cap {
     uint8_t cr_reserved;
 #ifdef __cplusplus
     inline uint64_t base() const { return cr_base; }
-    inline uint64_t address() const { return cr_cursor; }
-    inline int64_t offset() const { return cr_cursor - cr_base; }
+    inline uint64_t address() const { return cr_cursor & 0xFFFFFFFFFFFF; } // now we are assuming that we have 48 bits address space
+    inline int64_t offset() const { return (cr_cursor & 0xFFFFFFFFFFFF) - cr_base; }
     inline cc128_length_t top() const { return (cc128_length_t)cr_base + cr_length; }
     inline cc128_addr_t top64() const {
         const cc128_length_t t = top();

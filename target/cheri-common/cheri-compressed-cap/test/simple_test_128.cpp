@@ -16,8 +16,8 @@ TEST_CASE("QEMU representability regression tests", "[representable]") {
 }
 
 TEST_CASE("Reprentability with TOP>MAX_TOP", "[representable]") {
-    auto cap = TestAPICC::make_max_perms_cap(0xffff002d01ffc000, 0xffff002d02013ff6, 0xffff002d027fc000);
-    CHECK(cap.cr_pesbt == 0xffff1ffffffe7ffb);
+    auto cap = TestAPICC::make_max_perms_cap(0x002d01ffc000, 0x002d02013ff6, 0x002d027fc000);
+    CHECK(cap.cr_pesbt == 0xffff9ffffffe7ffb);
     CHECK(!TestAPICC::sail_fast_is_representable(cap, 0));
     CHECK(!TestAPICC::sail_precise_is_representable(cap, 0));
     CHECK(!TestAPICC::fast_is_representable_new_addr(cap, 0));
